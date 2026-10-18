@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f7f8">
+  <title>우리 가게 손익분기점 계산기</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="site-header">
+      <div class="eyebrow">쉬운 가게 운영 계산기</div>
+      <h1>우리 가게 손익분기점 계산기</h1>
+      <p>가게에서 나가는 돈과 예상 매출을 입력하면, 얼마를 팔아야 적자를 벗어나는지 확인할 수 있습니다.</p>
+    </header>
+
+    <section id="inputScreen" class="screen">
+      <form id="inputForm" novalidate>
+        <section class="panel">
+          <div class="section-heading">
+            <span class="step">1</span>
+            <div>
+              <h2>매달 나가는 돈</h2>
+              <p>매출이 적어도 매달 지출하는 금액입니다.</p>
+            </div>
+          </div>
+          <label class="field">
+            <span>월세·관리비</span>
+            <span class="input-wrap"><input id="rent" type="number" min="0" step="10" value="200" inputmode="decimal" required><span>만원</span></span>
+          </label>
+          <label class="field">
+            <span>직원 월급</span>
+            <span class="input-wrap"><input id="labor" type="number" min="0" step="10" value="300" inputmode="decimal" required><span>만원</span></span>
+          </label>
+          <label class="field">
+            <span>공과금·기타 비용</span>
+            <span class="input-wrap"><input id="other" type="number" min="0" step="10" value="100" inputmode="decimal" required><span>만원</span></span>
+          </label>
+          <div class="subtotal"><span>매달 나가는 돈 합계</span><strong id="fixedTotal">600만원</strong></div>
+        </section>
+
+        <section class="panel">
+          <div class="section-heading">
+            <span class="step">2</span>
+            <div>
+              <h2>매출에 따라 달라지는 비용</h2>
+              <p>매출이 늘면 함께 늘어나는 비용의 비율입니다.</p>
+            </div>
+          </div>
+          <label class="field">
+            <span>식재료비 등 비용 비율</span>
+            <span class="input-wrap"><input id="variableRatio" type="number" min="0" max="90" step="1" value="35" inputmode="decimal" required><span>%</span></span>
+          </label>
+          <p class="helper">예: 매출 100만원 중 식재료비와 포장비 등이 35만원이면 35를 입력하세요. 카드 수수료 등 매출에 따라 달라지는 비용도 가능한 한 포함하세요.</p>
+        </section>
+
+        <section class="panel">
+          <div class="section-heading">
+            <span class="step">3</span>
+            <div>
+              <h2>예상 월 매출</h2>
+              <p>한 달 동안 벌 것으로 예상하는 금액입니다.</p>
+            </div>
+          </div>
+          <label class="field">
+            <span>한 달 예상 매출</span>
+            <span class="input-wrap"><input id="monthlySales" type="number" min="0" step="50" value="1500" inputmode="decimal" required><span>만원</span></span>
+          </label>
+        </section>
+
+        <p id="formError" class="error-message" role="alert" hidden></p>
+        <button class="primary-button" type="submit">분석 결과 보기 <span aria-hidden="true">→</span></button>
+        <p class="privacy-note">입력값은 이 웹페이지 안에서만 계산합니다. 서버 전송이나 유료 AI 연결은 없습니다.</p>
+      </form>
+    </section>
+
+    <section id="resultScreen" class="screen" hidden>
+      <div class="result-top">
+        <div>
+          <div class="eyebrow">분석 결과</div>
+          <h2>우리 가게는 얼마를 팔아야 남을까?</h2>
+          <p id="resultInputsSummary" class="result-inputs-summary">월 고정 지출 600만원 · 매출 연동 비용 35% · 예상 매출 1,500만원</p>
+        </div>
+        <button id="backButton" class="secondary-button" type="button">입력값 수정</button>
+      </div>
+
+      <div class="summary-grid">
+        <article class="summary-card">
+          <span>손익분기점 매출</span>
+          <strong id="bepValue">923만원</strong>
+          <small>이 금액부터 계산상 흑자 구간</small>
+        </article>
+        <article class="summary-card">
+          <span>예상 월 손익</span>
+          <strong id="profitValue">+375만원</strong>
+          <small id="profitCaption">입력한 비용 기준</small>
+        </article>
+      </div>
+
+      <section class="panel chart-panel">
+        <div class="chart-title-row">
+          <div>
+            <h3>매출과 비용 비교</h3>
+            <p>두 선이 만나는 지점이 손익분기점입니다.</p>
+          </div>
+          <span class="unit-tag">단위: 만원</span>
+        </div>
+        <div class="legend">
+          <span><i class="legend-line revenue"></i>매출선</span>
+          <span><i class="legend-line cost"></i>총비용선</span>
+          <span><i class="legend-dot bep"></i>손익분기점</span>
+          <span><i class="legend-dot current"></i>예상 매출</span>
+        </div>
+        <div class="chart-wrap">
+          <svg id="bepChart" viewBox="0 0 600 340" role="img" aria-label="매출선과 총비용선의 손익분기점 그래프"></svg>
+        </div>
+        <p class="chart-note">가로축은 월 매출, 세로축은 금액입니다. 선은 입력한 비용 비율이 일정하다고 가정해 계산합니다.</p>
+      </section>
+
+      <section class="panel result-explanation">
+        <h3>그래프 읽는 방법</h3>
+        <ul>
+          <li>매출선이 비용선보다 위에 있으면 흑자입니다.</li>
+          <li>두 선이 만나는 지점이 손익분기점입니다.</li>
+          <li>예상 매출이 손익분기점보다 오른쪽에 있으면 흑자 구간입니다.</li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h3>숫자를 바꾸면 결과도 달라집니다</h3>
+        <p class="panel-intro">아래 버튼을 누르면 입력값과 그래프가 함께 바뀝니다. 입력 화면으로 돌아가도 변경된 숫자가 유지됩니다.</p>
+
+        <div class="adjust-row">
+          <div class="adjust-copy">
+            <strong>매달 나가는 돈</strong>
+            <span id="fixedValueLabel">현재 600만원</span>
+          </div>
+          <div class="adjust-buttons">
+            <button type="button" data-adjust="fixed" data-step="-100" aria-label="매달 나가는 돈 100만원 줄이기">− 100</button>
+            <button type="button" data-adjust="fixed" data-step="100" aria-label="매달 나가는 돈 100만원 늘리기">+ 100</button>
+          </div>
+        </div>
+
+        <div class="adjust-row">
+          <div class="adjust-copy">
+            <strong>식재료비 등 비용 비율</strong>
+            <span id="ratioValueLabel">현재 35%</span>
+          </div>
+          <div class="adjust-buttons">
+            <button type="button" data-adjust="ratio" data-step="-5" aria-label="비용 비율 5퍼센트포인트 줄이기">− 5%p</button>
+            <button type="button" data-adjust="ratio" data-step="5" aria-label="비용 비율 5퍼센트포인트 늘리기">+ 5%p</button>
+          </div>
+        </div>
+
+        <div class="adjust-row">
+          <div class="adjust-copy">
+            <strong>예상 월 매출</strong>
+            <span id="salesValueLabel">현재 1,500만원</span>
+          </div>
+          <div class="adjust-buttons">
+            <button type="button" data-adjust="sales" data-step="-100" aria-label="예상 매출 100만원 줄이기">− 100</button>
+            <button type="button" data-adjust="sales" data-step="100" aria-label="예상 매출 100만원 늘리기">+ 100</button>
+          </div>
+        </div>
+      </section>
+
+      <div class="disclaimer">
+        <strong>참고하세요</strong>
+        <p>이 계산은 입력한 매달 나가는 돈과 매출 연동 비용 비율을 기준으로 한 간이 추정입니다. 세금, 대출이자, 감가상각, 사업주 인건비 등 빠진 항목이 있으면 실제 손익과 다를 수 있습니다. 입력값의 정확성을 확인한 뒤 참고용으로 사용하세요.</p>
+      </div>
+      <button id="editButton" class="primary-button" type="button">입력 화면으로 돌아가기</button>
+    </section>
+
+    <footer>간단한 참고용 계산기 · 결과는 입력값에 따라 달라집니다.</footer>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>
